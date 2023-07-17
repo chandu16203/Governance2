@@ -1,0 +1,327 @@
+Based on the provided code snippet, there are some formatting and syntax errors. Here's the corrected version:
+
+```yaml
+---
+tower_job_templates:
+  - name: Prepare Execution
+    playbook: main.yml
+    description: >-
+      Prepares a template for execution by generating a temporary duplicate template and provisioning execute access 
+      after enforcing governance rules.
+    credentials:
+      - name: ansb1_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: true
+    ask_verbosity_on_launch: false
+    survey:
+      - type: text
+        question_name: "ServiceNow TASK Number"
+        question_description: >-
+          Enter a CTASK number in the format of 'CTASK########'.
+          This field is required in UAT and PROD.
+          Provisioning and lab use cases are excluded from this requirement.
+          Only a TASK of type 'implementation' is acceptable.
+        variable: snow_req_id
+        required: false
+      - type: text
+        question_name: "Source Template Name"
+        question_description: >
+          Enter the name of the template exactly how it appears in Tower. For example, 'OrgName-RepoName-Playbook'.
+        variable: src_job_template
+        required: true
+      - type: text
+        question_name: "Destination Organization"
+        question_description: >-
+          Enter the name of the organization where the generated template will be created. Use the format "ANSBL-OrgName".
+          The executor must have the ANSBL_ * * _EXE entitlement for this organization to see the generated template.
+        variable: dest_org_name
+        required: true
+      - type: multiplechoice
+        question_name: "Use Template Credential?"
+        question_description: >
+          Select yes to use a credential that is already mapped to the source template.
+          Select no to pick your credential at runtime.
+        variable: credentials_copy_bool
+        choices:
+          - 'yes'
+          - 'no'
+        required: false
+        default: 'yes'
+      - type: multiplechoice
+        question_name: "Inventory Origin"
+        question_description: >-
+          Select the origin of the inventory that will be used for execution.
+          If using an existing inventory or a hostnames list, enter those in the next prompts.
+        variable: inventory_input
+        choices:
+          - 'Template Inventory'
+          - 'ServiceNow Inventory'
+          - 'Existing Inventory in your org'
+          - 'Hostlist'
+        required: true
+      - type: text
+        question_name: "Inventory Origin: Inventory Name"
+        question_description: >-
+          Enter the inventory name as it appears in Tower. This inventory must already exist in the user's organization.
+          This field is only used when Inventory Origin is set to 'Existing Inventory in your Org'.
+        variable: dst_invent_name
+        required: false
+      - type: text
+        question_name: "Inventory Origin: Hostlist"
+        question_description: >-
+          Enter a comma-separated list of hostnames. This field is only used when Inventory Origin is set to 'Hostlist'.
+        variable: custom_hosts_input
+        required: false
+      - type: textarea
+        question_name: "Extra variables"
+        question_description: |
+          (Optional) This JSON formatted string will be passed to the job template or workflow that is being executed.
+          Sample JSON format structure:
+          {"test":"success","id":12345}
+        variable: extra_vars
+        required: false
+        default: "{}"
+      - type: text
+        question_name: "Limit"
+        question_description: >-
+          (Optional) Input a limit in the Ansible host pattern format. Multiple patterns can be separated by colons(':').
+          For example, 'a:b' means 'in group a or b', 'a:b:c' means 'in a or b but must be in c',
+          and 'a:!b' means 'in a, and definitely not in b'. The ask_limit_on_launch parameter must be enabled on the desired template.
+        variable: execution_limit
+        required: false
+        default: ""
+      - type: text
+        question_name: "Job tags"
+        question_description: >-
+          (Optional) Input a comma-separated list of job tags.
+          The ask_tags_on_launch parameter must be enabled on the desired template.
+        variable: execution_job_tags
+        required: false
+        default: ""
+      - type: text
+        question_name: "Skip tags"
+        question_description: >-
+          (Optional) Input a comma-separated list of skip tags.
+          The ask_skip_tags_on_launch parameter must be enabled on the desired template.
+        variable: execution_skip_tags
+        required: false
+        default: ""
+
+  - name: Prepare Execution TEST
+    playbook: main.yml
+    description: "Test Governance in any environment"
+    credentials:
+      - name: ansb1_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: Github ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+      tower_environment_override: dev
+    survey_enabled: true
+    ask_verbosity_on_launch: true
+    survey:
+      - type: multiplechoice
+        question_name: "Test Environment"
+        variable: tower_environment_override
+        choices:
+          - 'DEV'
+          - 'UAT'
+          - 'PROD'
+        required: true
+        default: 'PROD'
+      - type: text
+        question_name: "ServiceNow CTASK Number"
+        variable: snow_req_id
+        required: false
+      - type: text
+        question_name: "Source Template Name"
+        variable: src_job_template
+        required: true
+        default: 'Ansible-Governance-tower/show_variables'
+      - type: text
+        question_name: "Destination Organization"
+        variable: dest_org_name
+        required: true
+        default: 'ANSBL-Ansible'
+      - type: multiplechoice
+        question_name: "Use Template Credential?"
+        variable: credentials_copy_bool
+        choices:
+          - 'yes'
+          - 'no'
+        required: true
+        default: 'yes'
+      - type: multiplechoice
+        question_name: "Inventory Origin"
+        variable: inventory_input
+        choices:
+          - 'Template Inventory'
+          - 'ServiceNow Inventory'
+          - 'Existing Inventory in your Org'
+          - 'Hostlist'
+        required: true
+        default: 'Hostlist'
+      - type: text
+        question_name: "Inventory Origin: Inventory Name"
+        variable: dst_invent_name_input
+        required: false
+      - type: text
+        question_name: "Inventory Origin: Hostlist"
+        variable: custom_hosts_input
+        required: false
+        default: 'cdvra98a0388'
+      - type: textarea
+        question_name: "Extra variables"
+        question_description: |
+         
+
+ (Optional) This JSON formatted string will be passed to the job template or workflow that is being executed.
+          Sample JSON format structure:
+          {"test":"success","id":12345}
+        variable: extra_vars
+        required: false
+        default: "{}"
+      - type: text
+        question_name: "Limit"
+        question_description: >-
+          (Optional) Input a limit in the Ansible host pattern format. Multiple patterns can be separated by colons(':').
+          For example, 'a:b' means 'in group a or b', 'a:b:c' means 'in a or b but must be in c',
+          and 'a:!b' means 'in a, and definitely not in b'. The ask_limit_on_launch parameter must be enabled on the desired template.
+        variable: execution_limit
+        required: false
+        default: ""
+      - type: text
+        question_name: "Job tags"
+        question_description: >-
+          (Optional) Input a comma-separated list of job tags.
+          The ask_tags_on_launch parameter must be enabled on the desired template.
+        variable: execution_job_tags
+        required: false
+        default: ""
+      - type: text
+        question_name: "Skip tags"
+        question_description: >-
+          (Optional) Input a comma-separated list of skip tags.
+          The ask_skip_tags_on_launch parameter must be enabled on the desired template.
+        variable: execution_skip_tags
+        required: false
+        default: ""
+
+  - name: user_access
+    playbook: user_access.yml
+    description: "Template used by Ansible Governance to provision user access"
+    credentials:
+      - name: ansb1_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansbl_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: false
+    ask_verbosity_on_launch: false
+    ask_variables_on_launch: true
+
+  - name: delete_resources
+    playbook: delete_resources.yml
+    description: "Template used by Ansible Governance to cleanup objects"
+    credentials:
+      - name: ansbl_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: false
+    ask_verbosity_on_launch: false
+    ask_variables_on_launch: true
+
+  - name: workflow_user_access
+    playbook: workflow_user_access.yml
+    description: "Template used by Ansible Governance to provision workflow user access"
+    credentials:
+      - name: ansbl_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: false
+    ask_verbosity_on_launch: false
+    ask_verbosity_on_launch: true
+
+  - name: workflow_delete_resources
+    playbook: delete_workflow_resources.yml
+    description: "Template used by Ansible Governance to cleanup objects"
+    credentials:
+      - name: ansbl_tower_svc
+        type: ADENT
+      - name: Ansible ServiceNow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: false
+    ask_verbosity_on_launch: false
+    ask_variables_on_launch: true
+
+  - name: Delete_older_failed_Governance_templates
+    playbook: ansb1_remove_older_templates.yml
+    description: >-
+      Deletes all the job/workflow templates created by Governance 2 when failed and not deleted.
+    credentials:
+      - name: ansb_tower_svc
+        type: ADENT
+      - name: Ansible Servicenow
+        type: ServiceNow
+      - name: ansb1_tower_github
+        type: GitHub ADENT
+    job_type: run
+    allow_simultaneous: true
+    custom_virtualenv: /apps/ansible_venv/
+    extra_vars:
+    survey_enabled: false
+    ask_verbosity_on_launch: false
+
+  - name: show_variables
+    playbook: tower/show_variables.yml
+    description: "DO NOT DELETE: Execution to find variables that may be needed for Tower rest calls. Also can be used for testing Governance Execution playbook."
+    extra_vars:
+    job_type: run
+    survey_enabled: false
+    ask_inventory_on_launch: true
+    job_tags:
+    skip_tags:
+    allow_simultaneous: true
+    credentials:
+    survey:
+```
+
+Please note that I've fixed the indentation and corrected some typos in the original code. However, there might still be errors or inconsistencies in the overall structure or logic of the playbook.
